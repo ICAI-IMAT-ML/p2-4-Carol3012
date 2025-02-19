@@ -50,13 +50,11 @@ class LinearRegressor:
         elif method == "gradient_descent":
             self.fit_gradient_descent(X_with_bias, y, learning_rate, iterations)
 
+
     def fit_multiple(self, X, y):
         """
-        Fit the model using multiple linear regression (more than one independent variable).
-
-        This method applies the matrix approach to calculate the coefficients for
-        multiple linear regression.
-
+        Fit the model using multiple linear regression with the normal equation.
+        
         Args:
             X (np.ndarray): Independent variable data (2D array), with bias.
             y (np.ndarray): Dependent variable data (1D array).
@@ -64,15 +62,16 @@ class LinearRegressor:
         Returns:
             None: Modifies the model's coefficients and intercept in-place.
         """
-        # Replace this code with the code you did in the previous laboratory session
+        # Calcular los parámetros usando la ecuación normal: theta = (X^T X)^(-1) X^T y
+        theta = np.linalg.inv(X.T @ X) @ X.T @ y
 
-        # Store the intercept and the coefficients of the model
-        self.intercept = None
-        self.coefficients = None
+        # Guardar el intercepto (primer elemento) y los coeficientes (restantes)
+        self.intercept = theta[0]
+        self.coefficients = theta[1:]
 
     def fit_gradient_descent(self, X, y, learning_rate=0.01, iterations=1000):
         """
-        Fit the model using either normal equation or gradient descent.
+        Fit the model using gradient descent.
 
         Args:
             X (np.ndarray): Independent variable data (2D array), with bias.
@@ -83,28 +82,31 @@ class LinearRegressor:
         Returns:
             None: Modifies the model's coefficients and intercept in-place.
         """
+        m = len(y)  # Número de muestras
+        
+        # Inicializar los parámetros aleatoriamente con valores pequeños
+        theta = np.random.rand(X.shape[1]) * 0.01
 
-        # Initialize the parameters to very small values (close to 0)
-        m = len(y)
-        self.coefficients = (
-            np.random.rand(X.shape[1] - 1) * 0.01
-        )  # Small random numbers
-        self.intercept = np.random.rand() * 0.01
-
-        # Implement gradient descent (TODO)
+        # Bucle de descenso de gradiente
         for epoch in range(iterations):
-            predictions = None
-            error = predictions - y
+            predictions = X @ theta      # Calcular las predicciones
+            error = predictions - y      # Calcular el error
 
-            # TODO: Write the gradient values and the updates for the paramenters
-            gradient = None
-            self.intercept -= None
-            self.coefficients -= None
+            # Calcular el gradiente: (X^T * error) / m
+            gradient = (X.T @ error) / m
 
-            # TODO: Calculate and print the loss every 10 epochs
-            if epoch % 1000 == 0:
-                mse = None
-                print(f"Epoch {epoch}: MSE = {mse}")
+            # Actualizar los parámetros
+            theta -= learning_rate * gradient
+
+            # Imprimir el error cuadrático medio cada 100 iteraciones
+            if epoch % 100 == 0:
+                mse = np.mean(error ** 2)
+                print(f"Época {epoch}: MSE = {mse}")
+
+        # Guardar el intercepto y los coeficientes aprendidos
+        self.intercept = theta[0]
+        self.coefficients = theta[1:]
+
 
     def predict(self, X):
         """
@@ -112,21 +114,18 @@ class LinearRegressor:
 
         Args:
             X (np.ndarray): Independent variable data (1D or 2D array).
-            fit (bool): Flag to indicate if fit was done.
 
         Returns:
             np.ndarray: Predicted values of the dependent variable.
-
-        Raises:
-            ValueError: If the model is not yet fitted.
         """
-
-        # Paste your code from last week
-
         if self.coefficients is None or self.intercept is None:
             raise ValueError("Model is not yet fitted")
 
-        return None
+        if np.ndim(X) == 1:
+            X = X.reshape(-1, 1)
+
+        return X @ self.coefficients + self.intercept
+
 
 
 def evaluate_regression(y_true, y_pred):
@@ -140,18 +139,16 @@ def evaluate_regression(y_true, y_pred):
     Returns:
         dict: A dictionary containing the R^2, RMSE, and MAE values.
     """
+    # Calcular R^2
+    ss_total = np.sum((y_true - np.mean(y_true)) ** 2)
+    ss_residual = np.sum((y_true - y_pred) ** 2)
+    r_squared = 1 - (ss_residual / ss_total)
 
-    # R^2 Score
-    # TODO
-    r_squared = None
+    # Calcular RMSE (Raíz del Error Cuadrático Medio)
+    rmse = np.sqrt(np.mean((y_true - y_pred) ** 2))
 
-    # Root Mean Squared Error
-    # TODO
-    rmse = None
-
-    # Mean Absolute Error
-    # TODO
-    mae = None
+    # Calcular MAE (Error Absoluto Medio)
+    mae = np.mean(np.abs(y_true - y_pred))
 
     return {"R2": r_squared, "RMSE": rmse, "MAE": mae}
 
