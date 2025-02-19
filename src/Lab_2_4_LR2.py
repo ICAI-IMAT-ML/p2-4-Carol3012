@@ -168,22 +168,22 @@ def one_hot_encode(X, categorical_indices, drop_first=False):
     """
     X_transformed = X.copy()
 
-    # Procesar cada columna categórica (comenzando desde la última para evitar problemas de indexación)
+    # Procesar cada columna categórica (empezando por la última para no descolocar los índices)
     for index in sorted(categorical_indices, reverse=True):
-        # Extraer la columna categórica
-        categorical_column = X[:, index]
-        # Obtener los valores únicos de la columna
+        categorical_column = X_transformed[:, index]
         unique_values = np.unique(categorical_column)
 
         # Crear la matriz de codificación one-hot
-        one_hot = np.array([categorical_column == category for category in unique_values]).T.astype(int)
+        one_hot = np.array([categorical_column == category 
+                            for category in unique_values]).T.astype(int)
 
-        # Si se solicita eliminar la primera columna de la codificación
         if drop_first:
             one_hot = one_hot[:, 1:]
 
-        # Eliminar la columna original y concatenar las columnas codificadas
+        # Eliminar la columna categórica original
         X_transformed = np.delete(X_transformed, index, axis=1)
-        X_transformed = np.hstack((X_transformed, one_hot))
+
+        # IMPORTANTE: colocar primero las dummies y luego las columnas restantes
+        X_transformed = np.hstack((one_hot, X_transformed))
 
     return X_transformed
